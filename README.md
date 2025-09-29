@@ -1,59 +1,90 @@
 # csc172-data-cleaning-bansao
+
 # Data Cleaning with AI Support
 
 ## Student Information
-- Name: HUSSAM M. BANSAO
-- Course Year: BSCS 4
-- Date: 2025-09-29
+- **Name:** HUSSAM M. BANSAO
+- **Course Year:** BSCS 4
+- **Date:** September 29, 2025
 
 ## Dataset
-- Source: Kaggle — Titanic dataset  
+- **Source:** Kaggle — Titanic dataset  
   https://www.kaggle.com/c/titanic/data
-- Name: Titanic — Machine Learning from Disaster
+- **Name:** Titanic — Machine Learning from Disaster
 
-## Why this dataset
-The Titanic dataset is beginner-friendly and contains typical cleaning problems: missing values (Age, Cabin, Embarked), inconsistent categorical formatting, and some outliers in numeric fields like Fare.
+## Why This Dataset?
+The Titanic dataset is beginner-friendly and contains typical data cleaning challenges:
+- **Missing values** in Age, Cabin, and Embarked columns
+- **Inconsistent categorical formatting** across multiple fields
+- **Outliers** in numeric fields like Fare
+- **Potential duplicates** in passenger records
 
-## Issues found 
-- Missing values:
-  - `Age`: many NaNs
-  - `Cabin`: many NaNs (sparse)
-  - `Embarked`: a few NaNs
-- Duplicates: possible identical passenger rows (we check & drop)
-- Inconsistencies:
-  - Name strings with extra spaces
-  - Ticket/Cabin formats inconsistent
-- Outliers:
-  - `Fare` has a heavy right tail (high fares)
-  - `Age` extremes (check for implausible ages)
+This makes it an ideal dataset for demonstrating comprehensive data cleaning techniques.
 
-## Cleaning steps (high level)
-1. Load raw CSV `data/raw_dataset.csv`.
-2. Exploratory checks: `df.info()`, `df.describe()`, missing value counts, duplicates, sample rows.
-3. Handle missing values:
-   - Fill `Age` with median (group-based median by Pclass + Sex also provided as optional improved strategy).
-   - Fill `Embarked` with mode.
-   - For `Cabin`, create `HasCabin` boolean; optionally extract deck letter from non-null cabin entries; otherwise drop `Cabin`.
-4. Remove duplicates with `df.drop_duplicates()`.
-5. Standardize formats:
-   - `Name` trimmed, `Sex` lowercased, `Embarked` uppercased.
-   - Convert `Pclass` to categorical.
-6. Outlier detection & treatment:
-   - Use IQR method on `Fare` and `Age` to optionally remove or cap extreme outliers (demonstrated both approaches).
-7. Save cleaned dataset to `data/cleaned_dataset.csv`.
+## Issues Found
 
-## AI prompts used
-- Prompt 1:
-"Generate a reproducible Pandas notebook (Python) that loads the Kaggle Titanic dataset,
-performs exploration (info, describe, missing values), handles missing Age, Cabin, and Embarked,
-removes duplicates, standardizes formats for Name/Sex/Embarked, detects outliers using IQR,
-and saves the cleaned CSV. Include before/after snapshots for shape and sample rows and include comments."
+### Missing Values
+- **Age:** Many NaN values (approximately 20% missing)
+- **Cabin:** Highly sparse with many NaN values (approximately 77% missing)
+- **Embarked:** A few NaN values (only 2 missing)
 
-- Generated code (snippet from the AI assistant I used — full code is included in `notebooks/data_cleaning.ipynb`):
+### Data Quality Issues
+- **Duplicates:** Potential identical passenger rows detected
+- **Inconsistencies:**
+  - Name strings containing extra whitespace
+  - Inconsistent Ticket and Cabin format patterns
+- **Outliers:**
+  - `Fare` exhibits heavy right-tail distribution (high-fare outliers)
+  - `Age` contains extreme values requiring validation
+
+## Cleaning Steps (High Level)
+
+1. **Load Data:** Import raw CSV from `data/raw_dataset.csv`
+
+2. **Exploratory Analysis:** 
+   - Run `df.info()`, `df.describe()`
+   - Count missing values
+   - Check for duplicates
+   - Review sample rows
+
+3. **Handle Missing Values:**
+   - Fill `Age` with median (optional: group-based median by Pclass + Sex for improved accuracy)
+   - Fill `Embarked` with mode
+   - For `Cabin`: create `HasCabin` boolean feature, optionally extract deck letter from non-null entries, then drop original column
+
+4. **Remove Duplicates:** Use `df.drop_duplicates()`
+
+5. **Standardize Formats:**
+   - Trim whitespace from `Name`
+   - Convert `Sex` to lowercase
+   - Convert `Embarked` to uppercase
+   - Convert `Pclass` to categorical type
+
+6. **Outlier Detection & Treatment:**
+   - Apply IQR method on `Fare` and `Age`
+   - Demonstrate both removal and capping approaches for extreme outliers
+
+7. **Save Cleaned Data:** Export to `data/cleaned_dataset.csv`
+
+## AI Prompts Used
+
+### Prompt 1:
+```
+Generate a reproducible Pandas notebook (Python) that loads the Kaggle Titanic dataset,
+performs exploration (info, describe, missing values), handles missing Age, Cabin, and 
+Embarked, removes duplicates, standardizes formats for Name/Sex/Embarked, detects 
+outliers using IQR, and saves the cleaned CSV. Include before/after snapshots for 
+shape and sample rows and include comments.
+```
+
+### Generated Code Snippet
+The AI assistant generated the following code (full implementation available in `notebooks/data_cleaning.ipynb`):
+
 ```python
 import pandas as pd
 import numpy as np
 
+# Load raw data
 df = pd.read_csv("../data/raw_dataset.csv")
 print("Before shape:", df.shape)
 print(df.info())
@@ -64,33 +95,76 @@ df['Embarked'] = df['Embarked'].fillna(df['Embarked'].mode()[0])
 df['HasCabin'] = df['Cabin'].notna().astype(int)
 df = df.drop(columns=['Cabin'])  # optional
 
-# Duplicates
+# Remove duplicates
 df = df.drop_duplicates()
 
-# Standardize
+# Standardize formats
 df['Name'] = df['Name'].str.strip()
 df['Sex'] = df['Sex'].str.lower()
 df['Embarked'] = df['Embarked'].str.upper()
 
-# Outlier detection (IQR for Fare)
+# Outlier detection using IQR for Fare
 Q1 = df['Fare'].quantile(0.25)
 Q3 = df['Fare'].quantile(0.75)
 IQR = Q3 - Q1
 mask = ~((df['Fare'] < (Q1 - 1.5*IQR)) | (df['Fare'] > (Q3 + 1.5*IQR)))
 df_filtered = df[mask]
 
+# Save cleaned dataset
 df_filtered.to_csv("../data/cleaned_dataset.csv", index=False)
+```
 
-Results:
+## Results
 
-Rows before: 891
-Rows after: 891
-Columns before: 12
-Columns after: 14
+| Metric | Before | After |
+|--------|--------|-------|
+| **Rows** | 891 | 891 |
+| **Columns** | 12 | 14 |
 
-How I used an AI tool:
-I used an AI assistant to generate a reproducible Pandas notebook and to suggest robust approaches for filling Age (median vs. Pclass/Sex-based median), for extracting cabin decks, and for handling Fare outliers. The prompt and generated code snippet are above. I edited the generated output for clarity and reproducibility, and included comments and before/after snapshot cells in the notebook.
+### Key Improvements
+- Missing values successfully imputed
+- Duplicates removed (if any)
+- Standardized text formatting across categorical variables
+- Outliers identified and handled
+- New feature `HasCabin` created for better modeling
 
-Video
+## How I Used AI Tools
 
-Link: YOUR_VIDEO_LINK_HERE (YouTube unlisted or Google Drive)
+I used an AI assistant to:
+- Generate a reproducible Pandas notebook with comprehensive data cleaning steps
+- Suggest robust approaches for filling `Age` (comparing simple median vs. Pclass/Sex-based median)
+- Develop methods for extracting cabin deck information
+- Implement outlier handling strategies for `Fare` using IQR method
+
+The AI-generated code was reviewed, edited for clarity and reproducibility, and enhanced with detailed comments and before/after comparison cells in the notebook.
+
+## Video Demonstration
+
+**Link:** [YOUR_VIDEO_LINK_HERE] 
+
+
+
+---
+
+## Project Structure
+```
+csc172-data-cleaning-bansao/
+├── data/
+│   ├── raw_dataset.csv
+│   └── cleaned_dataset.csv
+├── notebooks/
+│   └── data_cleaning.ipynb
+└── README.md
+```
+
+## Dependencies
+- Python 3.8+
+- pandas
+- numpy
+- jupyter
+
+## Usage
+1. Clone this repository
+2. Place the raw Titanic dataset in `data/raw_dataset.csv`
+3. Run the Jupyter notebook: `notebooks/data_cleaning.ipynb`
+4. View cleaned output in `data/cleaned_dataset.csv`
